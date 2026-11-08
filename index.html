@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#176b57">
+<title>دفتر ویزیت مشتری‌ها</title>
+<style>
+:root{--green:#176b57;--green2:#e7f3ef;--ink:#182522;--muted:#687873;--line:#e2eae6;--bg:#f4f7f5;--white:#fff;--red:#b83232}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif}
+header{background:var(--green);color:#fff;padding:22px 18px 26px;border-radius:0 0 22px 22px}
+header h1{font-size:21px;margin:0 0 7px}header p{font-size:13px;margin:0;opacity:.88}
+main{max-width:720px;margin:auto;padding:15px 13px 40px}
+.days{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 15px}
+.day{border:1px solid var(--line);background:#fff;border-radius:13px;padding:11px 4px;color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
+.day.active{background:var(--green);border-color:var(--green);color:#fff}
+.day small{display:block;font-size:10px;margin-top:5px;opacity:.8}
+.panel{background:#fff;border:1px solid var(--line);border-radius:17px;padding:15px;margin-bottom:13px;box-shadow:0 3px 14px #19392d08}
+.panel h2{font-size:16px;margin:0 0 13px}
+.stats{display:flex;gap:8px;margin-bottom:13px}.stat{flex:1;background:var(--green2);border-radius:12px;padding:10px;text-align:center}
+.stat b{display:block;font-size:20px;color:var(--green)}.stat span{font-size:11px;color:var(--muted)}
+label{display:block;font-size:12px;color:var(--muted);margin:10px 0 5px}
+input,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit;font-size:14px;background:#fff;color:var(--ink)}
+textarea{resize:vertical;min-height:66px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+button.primary{width:100%;border:0;border-radius:11px;background:var(--green);color:#fff;padding:13px;font:inherit;font-size:14px;margin-top:13px;cursor:pointer}
+button.secondary{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:8px 10px;font:inherit;font-size:12px;cursor:pointer}
+.customer{border:1px solid var(--line);border-radius:13px;padding:12px;margin-top:9px;display:flex;gap:10px;align-items:flex-start}
+.customer.done{background:#f5faf7;opacity:.78}
+.customer.done .cname{text-decoration:line-through}
+.tick{width:22px;height:22px;accent-color:var(--green);margin:2px 0 0;flex:0 0 auto}
+.details{flex:1;min-width:0}.cname{font-weight:bold;font-size:14px;margin-bottom:6px;overflow-wrap:anywhere}
+.meta{font-size:12px;color:var(--muted);line-height:1.9;overflow-wrap:anywhere}
+.actions{display:flex;gap:6px;margin-top:7px}.delete{color:var(--red)}
+.empty{text-align:center;color:var(--muted);font-size:13px;padding:20px 5px}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#search{margin:0 0 8px}
+.hint{font-size:11px;color:var(--muted);line-height:1.8;margin-top:12px}
+@media(min-width:560px){.days{grid-template-columns:repeat(7,1fr)}}
+</style>
+
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#176b57">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+</script>
+</head>
+<body>
+<header>
+  <h1>دفتر ویزیت مشتری‌ها</h1>
+  <p>برنامه هفتگی مراجعه به مغازه‌ها، همراه با ساعت و شماره تماس</p>
+</header>
+<main>
+  <section class="panel">
+    <div class="topline"><h2>روزهای هفته</h2><span id="weekCount" class="meta"></span></div>
+    <div class="days" id="days"></div>
+    <div class="stats">
+      <div class="stat"><b id="total">۰</b><span>کل مراجعه‌ها</span></div>
+      <div class="stat"><b id="finished">۰</b><span>انجام‌شده</span></div>
+      <div class="stat"><b id="remaining">۰</b><span>باقی‌مانده</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 id="formTitle">افزودن مشتری برای <span id="selectedDayLabel">شنبه</span></h2>
+    <form id="customerForm">
+      <label for="shop">نام مغازه / مشتری *</label>
+      <input id="shop" required maxlength="80" placeholder="مثلاً سوپرمارکت رضایی">
+      <div class="row">
+        <div><label for="phone">شماره تماس</label><input id="phone" type="tel" inputmode="tel" placeholder="09..."></div>
+        <div><label for="time">ساعت مراجعه</label><input id="time" type="time"></div>
+      </div>
+      <label for="note">توضیحات (اختیاری)</label>
+      <textarea id="note" maxlength="300" placeholder="آدرس، سفارش یا نکته مهم..."></textarea>
+      <button class="primary" id="saveBtn" type="submit">＋ ثبت مشتری</button>
+      <button class="secondary" id="cancelEdit" type="button" style="display:none;margin-top:8px">لغو ویرایش</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="topline"><h2>لیست مراجعه‌های <span id="listDayLabel">شنبه</span></h2></div>
+    <input id="search" placeholder="جست‌وجو در مشتری‌های همین روز..." aria-label="جست‌وجو">
+    <div id="list"></div>
+    <p class="hint">اطلاعات روی همین گوشی ذخیره می‌شود. برای حفظ اطلاعات، داده‌های مرورگر را پاک نکنید. می‌توانید برای هر مشتری تیک انجام‌شدن را بزنید.</p>
+  </section>
+</main>
+<script>
+const dayNames=['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه'];
+const fa=n=>String(n).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let selected=0, editing=null;
+let customers=[];
+try{customers=JSON.parse(localStorage.getItem('visitCustomersV1')||'[]');if(!Array.isArray(customers))customers=[]}catch(e){customers=[]}
+const $=id=>document.getElementById(id);
+function persist(){localStorage.setItem('visitCustomersV1',JSON.stringify(customers));render()}
+function dayItems(){return customers.filter(c=>c.day===selected)}
+function render(){
+  $('days').innerHTML=dayNames.map((d,i)=>`<button class="day ${i===selected?'active':''}" data-day="${i}">${d}<small>${fa(customers.filter(c=>c.day===i).length)} مشتری</small></button>`).join('');
+  $('selectedDayLabel').textContent=dayNames[selected];$('listDayLabel').textContent=dayNames[selected];
+  const all=dayItems();$('total').textContent=fa(all.length);$('finished').textContent=fa(all.filter(c=>c.done).length);$('remaining').textContent=fa(all.filter(c=>!c.done).length);
+  $('weekCount').textContent='مجموع هفته: '+fa(customers.length)+' مراجعه';
+  const q=$('search').value.trim().toLowerCase();
+  const filtered=all.filter(c=>(c.name+' '+c.phone+' '+c.note).toLowerCase().includes(q)).sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));
+  $('list').innerHTML=filtered.length?filtered.map(c=>`
+    <article class="customer ${c.done?'done':''}">
+      <input class="tick" type="checkbox" data-toggle="${c.id}" ${c.done?'checked':''} aria-label="انجام شد">
+      <div class="details">
+        <div class="cname">${esc(c.name)}</div>
+        <div class="meta">${c.phone?'☎ '+esc(c.phone):'بدون شماره تماس'}${c.time?'　•　 ساعت '+esc(c.time):''}${c.note?'<br>'+esc(c.note):''}</div>
+        <div class="actions"><button class="secondary" data-edit="${c.id}">ویرایش</button><button class="secondary delete" data-delete="${c.id}">حذف</button></div>
+      </div>
+    </article>`).join(''):'<div class="empty">برای این روز هنوز مشتری ثبت نشده است.</div>';
+}
+function esc(s){return String(s||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
+$('days').addEventListener('click',e=>{const b=e.target.closest('[data-day]');if(!b)return;selected=Number(b.dataset.day);resetForm();render()});
+$('customerForm').addEventListener('submit',e=>{
+ e.preventDefault();const name=$('shop').value.trim();if(!name)return;
+ const data={name,phone:$('phone').value.trim(),time:$('time').value,note:$('note').value.trim(),day:selected};
+ if(editing!==null){const idx=customers.findIndex(c=>c.id===editing);if(idx>=0)customers[idx]={...customers[idx],...data}}
+ else customers.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),...data,done:false});
+ resetForm();persist();
+});
+$('list').addEventListener('change',e=>{const id=e.target.dataset.toggle;if(!id)return;const c=customers.find(x=>x.id===id);if(c){c.done=e.target.checked;persist()}});
+$('list').addEventListener('click',e=>{
+ const edit=e.target.dataset.edit,del=e.target.dataset.delete;
+ if(edit){const c=customers.find(x=>x.id===edit);if(!c)return;$('shop').value=c.name;$('phone').value=c.phone;$('time').value=c.time;$('note').value=c.note;editing=edit;$('formTitle').textContent='ویرایش اطلاعات مشتری';$('saveBtn').textContent='ذخیره تغییرات';$('cancelEdit').style.display='inline-block';$('shop').focus();window.scrollTo({top:0,behavior:'smooth'})}
+ if(del){const c=customers.find(x=>x.id===del);if(c&&confirm('مشتری «'+c.name+'» حذف شود؟')){customers=customers.filter(x=>x.id!==del);if(editing===del)resetForm();persist()}}
+});
+$('cancelEdit').addEventListener('click',resetForm);
+$('search').addEventListener('input',render);
+function resetForm(){editing=null;$('customerForm').reset();$('formTitle').innerHTML='افزودن مشتری برای <span id="selectedDayLabel">'+dayNames[selected]+'</span>';$('saveBtn').textContent='＋ ثبت مشتری';$('cancelEdit').style.display='none'}
+render();
+</script>
+</body>
+</html>
